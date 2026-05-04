@@ -1,4 +1,4 @@
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -22,6 +22,7 @@ export default function LibraryScreen() {
   const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
+  const router = useRouter();
 
   const fetchBooks = async () => {
     setLoading(true);
@@ -88,7 +89,10 @@ export default function LibraryScreen() {
   };
 
   const renderBook = ({ item }: any) => (
-    <View style={styles.bookCard}>
+    <TouchableOpacity
+      style={styles.bookCard}
+      onPress={() => router.push(`/book-detail?id=${item.id}` as any)}
+    >
       <View style={styles.coverContainer}>
         {item.cover_url ? (
           <Image source={{ uri: item.cover_url }} style={styles.cover} />
@@ -119,7 +123,7 @@ export default function LibraryScreen() {
           </Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

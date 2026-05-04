@@ -87,6 +87,13 @@ export default function AppLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="book-detail"
+        options={{
+          href: null,
+          title: "Book Details",
+        }}
+      />
     </Tabs>
   );
 }
