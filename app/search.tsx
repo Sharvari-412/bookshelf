@@ -1,20 +1,23 @@
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Image,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { supabase } from "../lib/supabase";
 
 export default function SearchScreen() {
   const [query, setQuery] = useState("");
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [adding, setAdding] = useState<string | null>(null);
 
   const searchBooks = async () => {
     if (!query.trim()) return;
@@ -33,15 +36,44 @@ export default function SearchScreen() {
     }
   };
 
+  const addToLibrary = async (item: any, status: string) => {
+    setAdding(item.key);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const cover = item.cover_i
+        ? `https://covers.openlibrary.org/b/id/${item.cover_i}-M.jpg`
+        : null;
+      const { error } = await supabase.from("user_books").insert({
+        user_id: user.id,
+        book_id: item.key,
+        title: item.title,
+        author: item.author_name?.join(", ") || "Unknown author",
+        cover_url: cover,
+        year: item.first_publish_year?.toString() || "",
+        status,
+      });
+      if (error) throw error;
+      Alert.alert("Added!", `"${item.title}" added to your library.`);
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    } finally {
+      setAdding(null);
+    }
+  };
+
   const renderBook = ({ item }: any) => {
     const cover = item.cover_i
       ? `https://covers.openlibrary.org/b/id/${item.cover_i}-M.jpg`
       : null;
     const authors = item.author_name?.join(", ") || "Unknown author";
     const year = item.first_publish_year || "";
+    const isAdding = adding === item.key;
 
     return (
-      <TouchableOpacity style={styles.bookCard}>
+      <View style={styles.bookCard}>
         <View style={styles.coverContainer}>
           {cover ? (
             <Image source={{ uri: cover }} style={styles.cover} />
@@ -59,8 +91,31 @@ export default function SearchScreen() {
             {authors}
           </Text>
           {year ? <Text style={styles.bookYear}>{String(year)}</Text> : null}
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.readingBtn]}
+              onPress={() => addToLibrary(item, "reading")}
+              disabled={isAdding}
+            >
+              <Text style={styles.actionBtnText}>Reading</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.wantBtn]}
+              onPress={() => addToLibrary(item, "want_to_read")}
+              disabled={isAdding}
+            >
+              <Text style={styles.actionBtnText}>Want to Read</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.readBtn]}
+              onPress={() => addToLibrary(item, "read")}
+              disabled={isAdding}
+            >
+              <Text style={styles.actionBtnText}>Finished</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -114,10 +169,7 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f8f8",
-  },
+  container: { flex: 1, backgroundColor: "#f8f8f8" },
   searchBar: {
     flexDirection: "row",
     padding: 16,
@@ -141,37 +193,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     justifyContent: "center",
   },
-  searchButtonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  loader: {
-    marginTop: 40,
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyIcon: {
-    fontSize: 40,
-    marginBottom: 12,
-  },
+  searchButtonText: { color: "#fff", fontWeight: "600", fontSize: 14 },
+  loader: { marginTop: 40 },
+  emptyContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
+  emptyIcon: { fontSize: 40, marginBottom: 12 },
   emptyText: {
     fontSize: 16,
     fontWeight: "500",
     color: "#1a1a1a",
     marginBottom: 4,
   },
-  emptySubtext: {
-    fontSize: 13,
-    color: "#888",
-  },
-  list: {
-    padding: 16,
-    gap: 12,
-  },
+  emptySubtext: { fontSize: 13, color: "#888" },
+  list: { padding: 16, gap: 12 },
   bookCard: {
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -187,10 +220,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     overflow: "hidden",
   },
-  cover: {
-    width: 60,
-    height: 90,
-  },
+  cover: { width: 60, height: 90 },
   noCover: {
     width: 60,
     height: 90,
@@ -199,27 +229,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 6,
   },
-  noCoverText: {
-    fontSize: 10,
-    color: "#aaa",
-    textAlign: "center",
+  noCoverText: { fontSize: 10, color: "#aaa", textAlign: "center" },
+  bookInfo: { flex: 1, justifyContent: "center", gap: 4 },
+  bookTitle: { fontSize: 15, fontWeight: "600", color: "#1a1a1a" },
+  bookAuthor: { fontSize: 13, color: "#555" },
+  bookYear: { fontSize: 12, color: "#aaa" },
+  actions: { flexDirection: "row", gap: 6, marginTop: 8 },
+  actionBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
   },
-  bookInfo: {
-    flex: 1,
-    justifyContent: "center",
-    gap: 4,
-  },
-  bookTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#1a1a1a",
-  },
-  bookAuthor: {
-    fontSize: 13,
-    color: "#555",
-  },
-  bookYear: {
-    fontSize: 12,
-    color: "#aaa",
-  },
+  actionBtnText: { fontSize: 11, fontWeight: "600", color: "#fff" },
+  readingBtn: { backgroundColor: "#F59E0B" },
+  wantBtn: { backgroundColor: "#6B4EFF" },
+  readBtn: { backgroundColor: "#10B981" },
 });

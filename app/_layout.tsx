@@ -1,7 +1,37 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
+import Auth from "../components/Auth";
+import { supabase } from "../lib/supabase";
 
 export default function AppLayout() {
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#6B4EFF" />
+      </View>
+    );
+  }
+
+  if (!session) {
+    return <Auth />;
+  }
+
   return (
     <Tabs
       screenOptions={{
@@ -12,13 +42,9 @@ export default function AppLayout() {
           borderTopColor: "#eee",
           borderTopWidth: 1,
         },
-        headerStyle: {
-          backgroundColor: "#fff",
-        },
+        headerStyle: { backgroundColor: "#fff" },
         headerTintColor: "#1a1a1a",
-        headerTitleStyle: {
-          fontWeight: "bold",
-        },
+        headerTitleStyle: { fontWeight: "bold" },
       }}
     >
       <Tabs.Screen
