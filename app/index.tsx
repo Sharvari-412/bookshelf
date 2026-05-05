@@ -1,10 +1,12 @@
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { supabase } from "../lib/supabase";
@@ -12,12 +14,10 @@ import { supabase } from "../lib/supabase";
 export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const [stats, setStats] = useState({
-    total: 0,
-    reading: 0,
-    finished: 0,
-  });
+  const [stats, setStats] = useState({ total: 0, reading: 0, finished: 0 });
   const [currentlyReading, setCurrentlyReading] = useState<any[]>([]);
+  const [recentlyFinished, setRecentlyFinished] = useState<any[]>([]);
+  const router = useRouter();
 
   const fetchData = async () => {
     setLoading(true);
@@ -38,12 +38,12 @@ export default function HomeScreen() {
       const total = data.length;
       const reading = data.filter((b) => b.status === "reading").length;
       const finished = data.filter((b) => b.status === "read").length;
-      const currentlyReading = data
-        .filter((b) => b.status === "reading")
-        .slice(0, 3);
 
       setStats({ total, reading, finished });
-      setCurrentlyReading(currentlyReading);
+      setCurrentlyReading(
+        data.filter((b) => b.status === "reading").slice(0, 3),
+      );
+      setRecentlyFinished(data.filter((b) => b.status === "read").slice(0, 5));
     } catch (error) {
       console.error(error);
     } finally {
@@ -106,28 +106,73 @@ export default function HomeScreen() {
           </View>
         ) : (
           currentlyReading.map((book) => (
-            <View key={book.id} style={styles.bookRow}>
+            <TouchableOpacity
+              key={book.id}
+              style={styles.bookRow}
+              onPress={() => router.push(`/book-detail?id=${book.id}` as any)}
+            >
               {book.cover_url ? (
-                <View style={styles.coverContainer}>
-                  <View style={styles.cover} />
-                </View>
+                <Image source={{ uri: book.cover_url }} style={styles.cover} />
               ) : (
-                <View style={[styles.coverContainer, styles.noCover]}>
-                  <Text style={styles.noCoverText}>📖</Text>
+                <View style={styles.noCover}>
+                  <Text style={styles.noCoverEmoji}>📖</Text>
                 </View>
               )}
               <View style={styles.bookInfo}>
-                <Text style={styles.bookTitle} numberOfLines={1}>
+                <Text style={styles.bookTitle} numberOfLines={2}>
                   {book.title}
                 </Text>
                 <Text style={styles.bookAuthor} numberOfLines={1}>
                   {book.author}
                 </Text>
+                <View style={styles.readingBadge}>
+                  <Text style={styles.readingBadgeText}>Reading</Text>
+                </View>
               </View>
-            </View>
+            </TouchableOpacity>
           ))
         )}
       </View>
+
+      {recentlyFinished.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Recently finished</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.horizontalScroll}
+          >
+            {recentlyFinished.map((book) => (
+              <TouchableOpacity
+                key={book.id}
+                style={styles.horizontalBook}
+                onPress={() => router.push(`/book-detail?id=${book.id}` as any)}
+              >
+                {book.cover_url ? (
+                  <Image
+                    source={{ uri: book.cover_url }}
+                    style={styles.horizontalCover}
+                  />
+                ) : (
+                  <View
+                    style={[styles.horizontalCover, styles.noCoverHorizontal]}
+                  >
+                    <Text style={styles.noCoverEmoji}>📖</Text>
+                  </View>
+                )}
+                <Text style={styles.horizontalTitle} numberOfLines={2}>
+                  {book.title}
+                </Text>
+                {book.rating ? (
+                  <Text style={styles.horizontalRating}>
+                    {"⭐".repeat(book.rating)}
+                  </Text>
+                ) : null}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -141,11 +186,7 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 32,
   },
-  greeting: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
-    marginBottom: 4,
-  },
+  greeting: { fontSize: 16, color: "rgba(255,255,255,0.8)", marginBottom: 4 },
   name: {
     fontSize: 28,
     fontWeight: "bold",
@@ -177,15 +218,8 @@ const styles = StyleSheet.create({
     color: "#6B4EFF",
     marginBottom: 4,
   },
-  statLabel: {
-    fontSize: 11,
-    color: "#888",
-    textAlign: "center",
-  },
-  section: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
+  statLabel: { fontSize: 11, color: "#888", textAlign: "center" },
+  section: { paddingHorizontal: 16, marginBottom: 24 },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
@@ -219,18 +253,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     alignItems: "center",
   },
-  coverContainer: {
-    width: 44,
-    height: 60,
+  cover: { width: 50, height: 70, borderRadius: 6 },
+  noCover: {
+    width: 50,
+    height: 70,
     borderRadius: 6,
-    overflow: "hidden",
-    backgroundColor: "#eee",
+    backgroundColor: "#f3f3f3",
     alignItems: "center",
     justifyContent: "center",
   },
-  cover: { width: 44, height: 60 },
-  noCover: { backgroundColor: "#f3f3f3" },
-  noCoverText: { fontSize: 20 },
+  noCoverEmoji: { fontSize: 24 },
   bookInfo: { flex: 1 },
   bookTitle: {
     fontSize: 15,
@@ -238,5 +270,33 @@ const styles = StyleSheet.create({
     color: "#1a1a1a",
     marginBottom: 4,
   },
-  bookAuthor: { fontSize: 13, color: "#888" },
+  bookAuthor: { fontSize: 13, color: "#888", marginBottom: 6 },
+  readingBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#F59E0B20",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  readingBadgeText: { fontSize: 11, fontWeight: "600", color: "#F59E0B" },
+  horizontalScroll: { marginLeft: -4 },
+  horizontalBook: { width: 100, marginRight: 12 },
+  horizontalCover: {
+    width: 100,
+    height: 140,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  noCoverHorizontal: {
+    backgroundColor: "#f3f3f3",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  horizontalTitle: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#1a1a1a",
+    marginBottom: 4,
+  },
+  horizontalRating: { fontSize: 11 },
 });

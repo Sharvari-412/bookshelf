@@ -1,3 +1,9 @@
+import {
+  Nunito_400Regular,
+  Nunito_600SemiBold,
+  Nunito_700Bold,
+  useFonts,
+} from "@expo-google-fonts/nunito";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { useEffect, useState } from "react";
@@ -9,28 +15,38 @@ export default function AppLayout() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const [fontsLoaded] = useFonts({
+    Nunito_400Regular,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+  });
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
     });
-
     supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
   }, []);
 
-  if (loading) {
+  if (loading || !fontsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#6B4EFF" />
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#6B4EFF",
+        }}
+      >
+        <ActivityIndicator size="large" color="#fff" />
       </View>
     );
   }
 
-  if (!session) {
-    return <Auth />;
-  }
+  if (!session) return <Auth />;
 
   return (
     <Tabs
@@ -41,10 +57,16 @@ export default function AppLayout() {
           backgroundColor: "#fff",
           borderTopColor: "#eee",
           borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 8,
+        },
+        tabBarLabelStyle: {
+          fontFamily: "Nunito_600SemiBold",
+          fontSize: 11,
         },
         headerStyle: { backgroundColor: "#fff" },
         headerTintColor: "#1a1a1a",
-        headerTitleStyle: { fontWeight: "bold" },
+        headerTitleStyle: { fontFamily: "Nunito_700Bold", fontSize: 18 },
       }}
     >
       <Tabs.Screen
@@ -89,10 +111,7 @@ export default function AppLayout() {
       />
       <Tabs.Screen
         name="book-detail"
-        options={{
-          href: null,
-          title: "Book Details",
-        }}
+        options={{ href: null, title: "Book Details" }}
       />
     </Tabs>
   );
