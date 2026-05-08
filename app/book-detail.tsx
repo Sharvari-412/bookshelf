@@ -13,6 +13,7 @@ import {
     View,
 } from "react-native";
 import { supabase } from "../lib/supabase";
+import { theme } from "../lib/theme";
 
 export default function BookDetailScreen() {
   const params = useLocalSearchParams();
@@ -65,7 +66,7 @@ export default function BookDetailScreen() {
   };
 
   const deleteBook = async () => {
-    Alert.alert("Remove book", "Are you sure you want to remove this book?", [
+    Alert.alert("Remove book", "Are you sure?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Remove",
@@ -79,19 +80,22 @@ export default function BookDetailScreen() {
   };
 
   const STATUS_OPTIONS = [
-    { label: "Reading", value: "reading", color: "#F59E0B" },
-    { label: "Want to Read", value: "want_to_read", color: "#6B4EFF" },
-    { label: "Finished", value: "read", color: "#10B981" },
-    { label: "DNF", value: "dnf", color: "#EF4444" },
+    { label: "Reading", value: "reading", color: theme.colors.warning },
+    {
+      label: "Want to Read",
+      value: "want_to_read",
+      color: theme.colors.primary,
+    },
+    { label: "Finished", value: "read", color: theme.colors.success },
+    { label: "DNF", value: "dnf", color: theme.colors.danger },
   ];
 
-  if (loading || !book) {
+  if (loading || !book)
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#6B4EFF" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
-  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -143,7 +147,7 @@ export default function BookDetailScreen() {
               <Ionicons
                 name={star <= rating ? "star" : "star-outline"}
                 size={36}
-                color={star <= rating ? "#F59E0B" : "#ddd"}
+                color={star <= rating ? theme.colors.warning : "#ddd"}
               />
             </TouchableOpacity>
           ))}
@@ -174,7 +178,6 @@ export default function BookDetailScreen() {
             {saving ? "Saving..." : "Save changes"}
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.deleteBtn} onPress={deleteBook}>
           <Text style={styles.deleteBtnText}>Remove from library</Text>
         </TouchableOpacity>
@@ -184,15 +187,15 @@ export default function BookDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f8f8" },
+  container: { flex: 1, backgroundColor: theme.colors.background },
   centered: { flex: 1, alignItems: "center", justifyContent: "center" },
   header: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.card,
     padding: 20,
     flexDirection: "row",
     gap: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: theme.colors.border,
   },
   cover: { width: 80, height: 120, borderRadius: 8 },
   noCover: {
@@ -205,22 +208,34 @@ const styles = StyleSheet.create({
   },
   noCoverText: { fontSize: 32 },
   headerInfo: { flex: 1, justifyContent: "center", gap: 6 },
-  title: { fontSize: 18, fontWeight: "bold", color: "#1a1a1a" },
-  author: { fontSize: 14, color: "#555" },
-  year: { fontSize: 13, color: "#aaa" },
+  title: {
+    fontSize: 18,
+    color: theme.colors.text,
+    fontFamily: theme.fonts.bold,
+  },
+  author: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    fontFamily: theme.fonts.regular,
+  },
+  year: {
+    fontSize: 13,
+    color: theme.colors.textMuted,
+    fontFamily: theme.fonts.regular,
+  },
   section: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.card,
     padding: 16,
     marginTop: 12,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "#eee",
+    borderColor: theme.colors.border,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#1a1a1a",
+    color: theme.colors.text,
     marginBottom: 12,
+    fontFamily: theme.fonts.bold,
   },
   statusOptions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   statusBtn: {
@@ -228,34 +243,43 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#eee",
-    backgroundColor: "#f8f8f8",
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
   },
-  statusBtnText: { fontSize: 13, fontWeight: "500", color: "#555" },
+  statusBtnText: {
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    fontFamily: theme.fonts.semibold,
+  },
   stars: { flexDirection: "row", gap: 8 },
   reviewInput: {
     backgroundColor: "#f3f3f3",
     borderRadius: 10,
     padding: 14,
     fontSize: 15,
-    color: "#1a1a1a",
+    color: theme.colors.text,
     minHeight: 120,
+    fontFamily: theme.fonts.regular,
   },
   actions: { padding: 16, gap: 10, marginBottom: 32 },
   saveBtn: {
-    backgroundColor: "#6B4EFF",
+    backgroundColor: theme.colors.primary,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
   },
-  saveBtnText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  saveBtnText: { color: "#fff", fontSize: 16, fontFamily: theme.fonts.bold },
   deleteBtn: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.card,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#EF4444",
+    borderColor: theme.colors.danger,
   },
-  deleteBtnText: { color: "#EF4444", fontSize: 16, fontWeight: "600" },
+  deleteBtnText: {
+    color: theme.colors.danger,
+    fontSize: 16,
+    fontFamily: theme.fonts.semibold,
+  },
 });

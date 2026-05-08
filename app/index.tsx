@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { supabase } from "../lib/supabase";
+import { theme } from "../lib/theme";
 
 export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
@@ -26,20 +27,17 @@ export default function HomeScreen() {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
-
       const { data, error } = await supabase
         .from("user_books")
         .select("*")
         .eq("user_id", user?.id)
         .order("date_added", { ascending: false });
-
       if (error) throw error;
-
-      const total = data.length;
-      const reading = data.filter((b) => b.status === "reading").length;
-      const finished = data.filter((b) => b.status === "read").length;
-
-      setStats({ total, reading, finished });
+      setStats({
+        total: data.length,
+        reading: data.filter((b) => b.status === "reading").length,
+        finished: data.filter((b) => b.status === "read").length,
+      });
       setCurrentlyReading(
         data.filter((b) => b.status === "reading").slice(0, 3),
       );
@@ -64,13 +62,12 @@ export default function HomeScreen() {
     return "Good evening 👋";
   };
 
-  if (loading) {
+  if (loading)
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#6B4EFF" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
-  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -80,18 +77,16 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{stats.total}</Text>
-          <Text style={styles.statLabel}>Total books</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{stats.finished}</Text>
-          <Text style={styles.statLabel}>Finished</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{stats.reading}</Text>
-          <Text style={styles.statLabel}>Reading now</Text>
-        </View>
+        {[
+          { label: "Total books", value: stats.total },
+          { label: "Finished", value: stats.finished },
+          { label: "Reading", value: stats.reading },
+        ].map((stat) => (
+          <View key={stat.label} style={styles.statCard}>
+            <Text style={styles.statNumber}>{stat.value}</Text>
+            <Text style={styles.statLabel}>{stat.label}</Text>
+          </View>
+        ))}
       </View>
 
       <View style={styles.section}>
@@ -137,11 +132,7 @@ export default function HomeScreen() {
       {recentlyFinished.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recently finished</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.horizontalScroll}
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {recentlyFinished.map((book) => (
               <TouchableOpacity
                 key={book.id}
@@ -178,20 +169,25 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f8f8" },
+  container: { flex: 1, backgroundColor: theme.colors.background },
   centered: { flex: 1, alignItems: "center", justifyContent: "center" },
   hero: {
-    backgroundColor: "#6B4EFF",
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 24,
     paddingTop: 40,
     paddingBottom: 32,
   },
-  greeting: { fontSize: 16, color: "rgba(255,255,255,0.8)", marginBottom: 4 },
+  greeting: {
+    fontSize: 16,
+    color: "rgba(255,255,255,0.8)",
+    marginBottom: 4,
+    fontFamily: theme.fonts.regular,
+  },
   name: {
     fontSize: 28,
-    fontWeight: "bold",
     color: "#fff",
     textTransform: "capitalize",
+    fontFamily: theme.fonts.bold,
   },
   statsRow: {
     flexDirection: "row",
@@ -202,54 +198,64 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.card,
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
+    elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
-    elevation: 3,
   },
   statNumber: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "#6B4EFF",
+    color: theme.colors.primary,
     marginBottom: 4,
+    fontFamily: theme.fonts.bold,
   },
-  statLabel: { fontSize: 11, color: "#888", textAlign: "center" },
+  statLabel: {
+    fontSize: 11,
+    color: theme.colors.textMuted,
+    textAlign: "center",
+    fontFamily: theme.fonts.regular,
+  },
   section: { paddingHorizontal: 16, marginBottom: 24 },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#1a1a1a",
+    color: theme.colors.text,
     marginBottom: 12,
+    fontFamily: theme.fonts.bold,
   },
   emptyCard: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.card,
     borderRadius: 12,
     padding: 32,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: theme.colors.border,
   },
   emptyIcon: { fontSize: 32, marginBottom: 12 },
   emptyText: {
     fontSize: 15,
-    fontWeight: "500",
-    color: "#1a1a1a",
+    color: theme.colors.text,
     marginBottom: 4,
+    fontFamily: theme.fonts.semibold,
   },
-  emptySubtext: { fontSize: 13, color: "#888", textAlign: "center" },
+  emptySubtext: {
+    fontSize: 13,
+    color: theme.colors.textMuted,
+    textAlign: "center",
+    fontFamily: theme.fonts.regular,
+  },
   bookRow: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.card,
     borderRadius: 12,
     padding: 12,
     flexDirection: "row",
     gap: 12,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: theme.colors.border,
     marginBottom: 8,
     alignItems: "center",
   },
@@ -266,11 +272,16 @@ const styles = StyleSheet.create({
   bookInfo: { flex: 1 },
   bookTitle: {
     fontSize: 15,
-    fontWeight: "600",
-    color: "#1a1a1a",
+    color: theme.colors.text,
     marginBottom: 4,
+    fontFamily: theme.fonts.semibold,
   },
-  bookAuthor: { fontSize: 13, color: "#888", marginBottom: 6 },
+  bookAuthor: {
+    fontSize: 13,
+    color: theme.colors.textMuted,
+    marginBottom: 6,
+    fontFamily: theme.fonts.regular,
+  },
   readingBadge: {
     alignSelf: "flex-start",
     backgroundColor: "#F59E0B20",
@@ -278,8 +289,11 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 6,
   },
-  readingBadgeText: { fontSize: 11, fontWeight: "600", color: "#F59E0B" },
-  horizontalScroll: { marginLeft: -4 },
+  readingBadgeText: {
+    fontSize: 11,
+    color: theme.colors.warning,
+    fontFamily: theme.fonts.semibold,
+  },
   horizontalBook: { width: 100, marginRight: 12 },
   horizontalCover: {
     width: 100,
@@ -294,9 +308,9 @@ const styles = StyleSheet.create({
   },
   horizontalTitle: {
     fontSize: 12,
-    fontWeight: "500",
-    color: "#1a1a1a",
+    color: theme.colors.text,
     marginBottom: 4,
+    fontFamily: theme.fonts.semibold,
   },
   horizontalRating: { fontSize: 11 },
 });

@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { supabase } from "../lib/supabase";
+import { theme } from "../lib/theme";
 
 export default function ProfileScreen() {
   const [user, setUser] = useState<any>(null);
@@ -28,20 +29,17 @@ export default function ProfileScreen() {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
-
       const { data, error } = await supabase
         .from("user_books")
         .select("status")
         .eq("user_id", user?.id);
-
       if (error) throw error;
-
-      const total = data.length;
-      const reading = data.filter((b) => b.status === "reading").length;
-      const finished = data.filter((b) => b.status === "read").length;
-      const wantToRead = data.filter((b) => b.status === "want_to_read").length;
-
-      setStats({ total, reading, finished, wantToRead });
+      setStats({
+        total: data.length,
+        reading: data.filter((b) => b.status === "reading").length,
+        finished: data.filter((b) => b.status === "read").length,
+        wantToRead: data.filter((b) => b.status === "want_to_read").length,
+      });
     } catch (error) {
       console.error(error);
     } finally {
@@ -56,7 +54,7 @@ export default function ProfileScreen() {
   );
 
   const handleSignOut = async () => {
-    Alert.alert("Sign out", "Are you sure you want to sign out?", [
+    Alert.alert("Sign out", "Are you sure?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Sign out",
@@ -68,13 +66,12 @@ export default function ProfileScreen() {
     ]);
   };
 
-  if (loading) {
+  if (loading)
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#6B4EFF" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
-  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -97,28 +94,35 @@ export default function ProfileScreen() {
       <View style={styles.statsSection}>
         <Text style={styles.sectionTitle}>Your reading stats</Text>
         <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{stats.total}</Text>
-            <Text style={styles.statLabel}>Total books</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={[styles.statNumber, { color: "#10B981" }]}>
-              {stats.finished}
-            </Text>
-            <Text style={styles.statLabel}>Finished</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={[styles.statNumber, { color: "#F59E0B" }]}>
-              {stats.reading}
-            </Text>
-            <Text style={styles.statLabel}>Reading</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={[styles.statNumber, { color: "#6B4EFF" }]}>
-              {stats.wantToRead}
-            </Text>
-            <Text style={styles.statLabel}>Want to Read</Text>
-          </View>
+          {[
+            {
+              label: "Total books",
+              value: stats.total,
+              color: theme.colors.primary,
+            },
+            {
+              label: "Finished",
+              value: stats.finished,
+              color: theme.colors.success,
+            },
+            {
+              label: "Reading",
+              value: stats.reading,
+              color: theme.colors.warning,
+            },
+            {
+              label: "Want to Read",
+              value: stats.wantToRead,
+              color: theme.colors.primary,
+            },
+          ].map((stat) => (
+            <View key={stat.label} style={styles.statCard}>
+              <Text style={[styles.statNumber, { color: stat.color }]}>
+                {stat.value}
+              </Text>
+              <Text style={styles.statLabel}>{stat.label}</Text>
+            </View>
+          ))}
         </View>
       </View>
 
@@ -135,10 +139,10 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f8f8" },
+  container: { flex: 1, backgroundColor: theme.colors.background },
   centered: { flex: 1, alignItems: "center", justifyContent: "center" },
   hero: {
-    backgroundColor: "#6B4EFF",
+    backgroundColor: theme.colors.primary,
     paddingTop: 40,
     paddingBottom: 32,
     alignItems: "center",
@@ -153,74 +157,48 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 4,
   },
-  avatarText: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  email: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
+  avatarText: { fontSize: 28, color: "#fff", fontFamily: theme.fonts.bold },
+  email: { fontSize: 16, color: "#fff", fontFamily: theme.fonts.semibold },
   memberSince: {
     fontSize: 13,
     color: "rgba(255,255,255,0.7)",
+    fontFamily: theme.fonts.regular,
   },
-  statsSection: {
-    padding: 16,
-    marginTop: 16,
-  },
+  statsSection: { padding: 16, marginTop: 16 },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#1a1a1a",
+    color: theme.colors.text,
     marginBottom: 12,
+    fontFamily: theme.fonts.bold,
   },
-  statsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
+  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   statCard: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.card,
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
     width: "47%",
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: theme.colors.border,
   },
-  statNumber: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#6B4EFF",
-    marginBottom: 4,
-  },
+  statNumber: { fontSize: 28, marginBottom: 4, fontFamily: theme.fonts.bold },
   statLabel: {
     fontSize: 13,
-    color: "#888",
+    color: theme.colors.textMuted,
+    fontFamily: theme.fonts.regular,
   },
-  section: {
-    paddingHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 32,
-  },
+  section: { paddingHorizontal: 16, marginTop: 8, marginBottom: 32 },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: theme.colors.border,
     overflow: "hidden",
   },
-  menuItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
+  menuItem: { padding: 16 },
   menuItemTextDanger: {
     fontSize: 15,
-    color: "#EF4444",
-    fontWeight: "500",
+    color: theme.colors.danger,
+    fontFamily: theme.fonts.semibold,
   },
 });

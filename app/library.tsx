@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { supabase } from "../lib/supabase";
+import { theme } from "../lib/theme";
 
 const TABS = [
   { label: "All", value: "all" },
@@ -31,17 +32,12 @@ export default function LibraryScreen() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
-
       let query = supabase
         .from("user_books")
         .select("*")
         .eq("user_id", user.id)
         .order("date_added", { ascending: false });
-
-      if (activeTab !== "all") {
-        query = query.eq("status", activeTab);
-      }
-
+      if (activeTab !== "all") query = query.eq("status", activeTab);
       const { data, error } = await query;
       if (error) throw error;
       setBooks(data || []);
@@ -61,15 +57,15 @@ export default function LibraryScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "reading":
-        return "#F59E0B";
+        return theme.colors.warning;
       case "want_to_read":
-        return "#6B4EFF";
+        return theme.colors.primary;
       case "read":
-        return "#10B981";
+        return theme.colors.success;
       case "dnf":
-        return "#EF4444";
+        return theme.colors.danger;
       default:
-        return "#888";
+        return theme.colors.textMuted;
     }
   };
 
@@ -146,9 +142,12 @@ export default function LibraryScreen() {
           </TouchableOpacity>
         ))}
       </View>
-
       {loading ? (
-        <ActivityIndicator size="large" color="#6B4EFF" style={styles.loader} />
+        <ActivityIndicator
+          size="large"
+          color={theme.colors.primary}
+          style={styles.loader}
+        />
       ) : books.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>📚</Text>
@@ -171,60 +170,47 @@ export default function LibraryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f8f8" },
+  container: { flex: 1, backgroundColor: theme.colors.background },
   tabs: {
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: theme.colors.border,
     paddingHorizontal: 8,
   },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: "#6B4EFF",
-  },
+  tab: { flex: 1, paddingVertical: 12, alignItems: "center" },
+  activeTab: { borderBottomWidth: 2, borderBottomColor: theme.colors.primary },
   tabText: {
     fontSize: 12,
-    color: "#888",
-    fontWeight: "500",
+    color: theme.colors.textMuted,
+    fontFamily: theme.fonts.semibold,
   },
-  activeTabText: {
-    color: "#6B4EFF",
-    fontWeight: "600",
-  },
+  activeTabText: { color: theme.colors.primary, fontFamily: theme.fonts.bold },
   loader: { marginTop: 40 },
-  emptyContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  emptyContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
   emptyIcon: { fontSize: 40, marginBottom: 12 },
   emptyText: {
     fontSize: 16,
-    fontWeight: "500",
-    color: "#1a1a1a",
+    color: theme.colors.text,
     marginBottom: 4,
+    fontFamily: theme.fonts.semibold,
   },
   emptySubtext: {
     fontSize: 13,
-    color: "#888",
+    color: theme.colors.textMuted,
     textAlign: "center",
     paddingHorizontal: 32,
+    fontFamily: theme.fonts.regular,
   },
   list: { padding: 16, gap: 12 },
   bookCard: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.card,
     borderRadius: 12,
     padding: 12,
     flexDirection: "row",
     gap: 12,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: theme.colors.border,
   },
   coverContainer: {
     width: 60,
@@ -241,11 +227,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 6,
   },
-  noCoverText: { fontSize: 10, color: "#aaa", textAlign: "center" },
+  noCoverText: {
+    fontSize: 10,
+    color: "#aaa",
+    textAlign: "center",
+    fontFamily: theme.fonts.regular,
+  },
   bookInfo: { flex: 1, justifyContent: "center", gap: 4 },
-  bookTitle: { fontSize: 15, fontWeight: "600", color: "#1a1a1a" },
-  bookAuthor: { fontSize: 13, color: "#555" },
-  bookYear: { fontSize: 12, color: "#aaa" },
+  bookTitle: {
+    fontSize: 15,
+    color: theme.colors.text,
+    fontFamily: theme.fonts.semibold,
+  },
+  bookAuthor: {
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    fontFamily: theme.fonts.regular,
+  },
+  bookYear: {
+    fontSize: 12,
+    color: theme.colors.textMuted,
+    fontFamily: theme.fonts.regular,
+  },
   statusBadge: {
     alignSelf: "flex-start",
     paddingHorizontal: 8,
@@ -253,5 +256,5 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginTop: 4,
   },
-  statusText: { fontSize: 11, fontWeight: "600" },
+  statusText: { fontSize: 11, fontFamily: theme.fonts.semibold },
 });
