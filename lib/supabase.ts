@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 
 const supabaseUrl = "https://wuvvalfhqkselavanyhm.supabase.co";
 const supabaseAnonKey =
@@ -11,9 +12,17 @@ const ExpoSecureStoreAdapter = {
   removeItem: (key: string) => SecureStore.deleteItemAsync(key),
 };
 
+const WebLocalStorageAdapter = {
+  getItem: (key: string) => Promise.resolve(localStorage.getItem(key)),
+  setItem: (key: string, value: string) =>
+    Promise.resolve(localStorage.setItem(key, value)),
+  removeItem: (key: string) => Promise.resolve(localStorage.removeItem(key)),
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: ExpoSecureStoreAdapter,
+    storage:
+      Platform.OS === "web" ? WebLocalStorageAdapter : ExpoSecureStoreAdapter,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
