@@ -74,8 +74,16 @@ export default function BookDetailScreen() {
         text: "Remove",
         style: "destructive",
         onPress: async () => {
-          await supabase.from("user_books").delete().eq("id", id);
-          router.back();
+          try {
+            const { error } = await supabase
+              .from("user_books")
+              .delete()
+              .eq("id", id);
+            if (error) throw error;
+            router.back();
+          } catch (error: any) {
+            Alert.alert("Error", error.message);
+          }
         },
       },
     ]);
