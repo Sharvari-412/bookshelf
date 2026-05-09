@@ -14,11 +14,13 @@ import {
 } from "react-native";
 import { supabase } from "../lib/supabase";
 import { theme } from "../lib/theme";
+import { useTheme } from "../lib/ThemeContext";
 
 export default function BookDetailScreen() {
   const params = useLocalSearchParams();
   const id = params.id as string;
   const router = useRouter();
+  const { colors } = useTheme();
   const [book, setBook] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -80,57 +82,134 @@ export default function BookDetailScreen() {
   };
 
   const STATUS_OPTIONS = [
-    { label: "Reading", value: "reading", color: theme.colors.warning },
-    {
-      label: "Want to Read",
-      value: "want_to_read",
-      color: theme.colors.primary,
-    },
-    { label: "Finished", value: "read", color: theme.colors.success },
-    { label: "DNF", value: "dnf", color: theme.colors.danger },
+    { label: "Reading", value: "reading", color: colors.warning },
+    { label: "Want to Read", value: "want_to_read", color: colors.primary },
+    { label: "Finished", value: "read", color: colors.success },
+    { label: "DNF", value: "dnf", color: colors.danger },
   ];
 
   if (loading || !book)
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colors.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      showsVerticalScrollIndicator={false}
+    >
+      <View
+        style={{
+          backgroundColor: colors.card,
+          padding: 20,
+          flexDirection: "row",
+          gap: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        }}
+      >
         {book.cover_url ? (
-          <Image source={{ uri: book.cover_url }} style={styles.cover} />
+          <Image
+            source={{ uri: book.cover_url }}
+            style={{ width: 80, height: 120, borderRadius: 8 }}
+          />
         ) : (
-          <View style={styles.noCover}>
-            <Text style={styles.noCoverText}>📖</Text>
+          <View
+            style={{
+              width: 80,
+              height: 120,
+              borderRadius: 8,
+              backgroundColor: colors.input,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text style={{ fontSize: 32 }}>📖</Text>
           </View>
         )}
-        <View style={styles.headerInfo}>
-          <Text style={styles.title}>{book.title}</Text>
-          <Text style={styles.author}>{book.author}</Text>
-          {book.year ? <Text style={styles.year}>{book.year}</Text> : null}
+        <View style={{ flex: 1, justifyContent: "center", gap: 6 }}>
+          <Text
+            style={{
+              fontSize: 18,
+              color: colors.text,
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            {book.title}
+          </Text>
+          <Text
+            style={{
+              fontSize: 14,
+              color: colors.textSecondary,
+              fontFamily: theme.fonts.regular,
+            }}
+          >
+            {book.author}
+          </Text>
+          {book.year ? (
+            <Text
+              style={{
+                fontSize: 13,
+                color: colors.textMuted,
+                fontFamily: theme.fonts.regular,
+              }}
+            >
+              {book.year}
+            </Text>
+          ) : null}
         </View>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Status</Text>
-        <View style={styles.statusOptions}>
+      <View
+        style={{
+          backgroundColor: colors.card,
+          padding: 16,
+          marginTop: 12,
+          borderTopWidth: 1,
+          borderBottomWidth: 1,
+          borderColor: colors.border,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 16,
+            color: colors.text,
+            marginBottom: 12,
+            fontFamily: theme.fonts.bold,
+          }}
+        >
+          Status
+        </Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
           {STATUS_OPTIONS.map((opt) => (
             <TouchableOpacity
               key={opt.value}
-              style={[
-                styles.statusBtn,
-                status === opt.value && { backgroundColor: opt.color },
-              ]}
+              style={{
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: status === opt.value ? opt.color : colors.border,
+                backgroundColor:
+                  status === opt.value ? opt.color : colors.background,
+              }}
               onPress={() => setStatus(opt.value)}
             >
               <Text
-                style={[
-                  styles.statusBtnText,
-                  status === opt.value && { color: "#fff" },
-                ]}
+                style={{
+                  fontSize: 13,
+                  fontFamily: theme.fonts.semibold,
+                  color: status === opt.value ? "#fff" : colors.textSecondary,
+                }}
               >
                 {opt.label}
               </Text>
@@ -139,27 +218,71 @@ export default function BookDetailScreen() {
         </View>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Your rating</Text>
-        <View style={styles.stars}>
+      <View
+        style={{
+          backgroundColor: colors.card,
+          padding: 16,
+          marginTop: 12,
+          borderTopWidth: 1,
+          borderBottomWidth: 1,
+          borderColor: colors.border,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 16,
+            color: colors.text,
+            marginBottom: 12,
+            fontFamily: theme.fonts.bold,
+          }}
+        >
+          Your rating
+        </Text>
+        <View style={{ flexDirection: "row", gap: 8 }}>
           {[1, 2, 3, 4, 5].map((star) => (
             <TouchableOpacity key={star} onPress={() => setRating(star)}>
               <Ionicons
                 name={star <= rating ? "star" : "star-outline"}
                 size={36}
-                color={star <= rating ? theme.colors.warning : "#ddd"}
+                color={star <= rating ? colors.warning : colors.border}
               />
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Your review</Text>
+      <View
+        style={{
+          backgroundColor: colors.card,
+          padding: 16,
+          marginTop: 12,
+          borderTopWidth: 1,
+          borderBottomWidth: 1,
+          borderColor: colors.border,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 16,
+            color: colors.text,
+            marginBottom: 12,
+            fontFamily: theme.fonts.bold,
+          }}
+        >
+          Your review
+        </Text>
         <TextInput
-          style={styles.reviewInput}
-          placeholder="Write your thoughts about this book..."
-          placeholderTextColor="#aaa"
+          style={{
+            backgroundColor: colors.input,
+            borderRadius: 10,
+            padding: 14,
+            fontSize: 15,
+            color: colors.text,
+            minHeight: 120,
+            fontFamily: theme.fonts.regular,
+          }}
+          placeholder="Write your thoughts..."
+          placeholderTextColor={colors.textMuted}
           value={review}
           onChangeText={setReview}
           multiline
@@ -168,118 +291,52 @@ export default function BookDetailScreen() {
         />
       </View>
 
-      <View style={styles.actions}>
+      <View style={{ padding: 16, gap: 10, marginBottom: 32 }}>
         <TouchableOpacity
-          style={[styles.saveBtn, saving && { opacity: 0.6 }]}
+          style={{
+            backgroundColor: colors.primary,
+            borderRadius: 10,
+            paddingVertical: 14,
+            alignItems: "center",
+            opacity: saving ? 0.6 : 1,
+          }}
           onPress={saveChanges}
           disabled={saving}
         >
-          <Text style={styles.saveBtnText}>
+          <Text
+            style={{
+              color: "#fff",
+              fontSize: 16,
+              fontFamily: theme.fonts.bold,
+            }}
+          >
             {saving ? "Saving..." : "Save changes"}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.deleteBtn} onPress={deleteBook}>
-          <Text style={styles.deleteBtnText}>Remove from library</Text>
+        <TouchableOpacity
+          style={{
+            backgroundColor: colors.card,
+            borderRadius: 10,
+            paddingVertical: 14,
+            alignItems: "center",
+            borderWidth: 1,
+            borderColor: colors.danger,
+          }}
+          onPress={deleteBook}
+        >
+          <Text
+            style={{
+              color: colors.danger,
+              fontSize: 16,
+              fontFamily: theme.fonts.semibold,
+            }}
+          >
+            Remove from library
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  centered: { flex: 1, alignItems: "center", justifyContent: "center" },
-  header: {
-    backgroundColor: theme.colors.card,
-    padding: 20,
-    flexDirection: "row",
-    gap: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  cover: { width: 80, height: 120, borderRadius: 8 },
-  noCover: {
-    width: 80,
-    height: 120,
-    borderRadius: 8,
-    backgroundColor: "#f3f3f3",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  noCoverText: { fontSize: 32 },
-  headerInfo: { flex: 1, justifyContent: "center", gap: 6 },
-  title: {
-    fontSize: 18,
-    color: theme.colors.text,
-    fontFamily: theme.fonts.bold,
-  },
-  author: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    fontFamily: theme.fonts.regular,
-  },
-  year: {
-    fontSize: 13,
-    color: theme.colors.textMuted,
-    fontFamily: theme.fonts.regular,
-  },
-  section: {
-    backgroundColor: theme.colors.card,
-    padding: 16,
-    marginTop: 12,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    color: theme.colors.text,
-    marginBottom: 12,
-    fontFamily: theme.fonts.bold,
-  },
-  statusOptions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  statusBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.background,
-  },
-  statusBtnText: {
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    fontFamily: theme.fonts.semibold,
-  },
-  stars: { flexDirection: "row", gap: 8 },
-  reviewInput: {
-    backgroundColor: "#f3f3f3",
-    borderRadius: 10,
-    padding: 14,
-    fontSize: 15,
-    color: theme.colors.text,
-    minHeight: 120,
-    fontFamily: theme.fonts.regular,
-  },
-  actions: { padding: 16, gap: 10, marginBottom: 32 },
-  saveBtn: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  saveBtnText: { color: "#fff", fontSize: 16, fontFamily: theme.fonts.bold },
-  deleteBtn: {
-    backgroundColor: theme.colors.card,
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: theme.colors.danger,
-  },
-  deleteBtnText: {
-    color: theme.colors.danger,
-    fontSize: 16,
-    fontFamily: theme.fonts.semibold,
-  },
-});
+const styles = StyleSheet.create({});

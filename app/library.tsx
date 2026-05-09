@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { supabase } from "../lib/supabase";
 import { theme } from "../lib/theme";
+import { useTheme } from "../lib/ThemeContext";
 
 const TABS = [
   { label: "All", value: "all" },
@@ -24,6 +25,7 @@ export default function LibraryScreen() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
   const router = useRouter();
+  const { colors } = useTheme();
 
   const fetchBooks = async () => {
     setLoading(true);
@@ -57,15 +59,15 @@ export default function LibraryScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "reading":
-        return theme.colors.warning;
+        return colors.warning;
       case "want_to_read":
-        return theme.colors.primary;
+        return colors.primary;
       case "read":
-        return theme.colors.success;
+        return colors.success;
       case "dnf":
-        return theme.colors.danger;
+        return colors.danger;
       default:
-        return theme.colors.textMuted;
+        return colors.textMuted;
     }
   };
 
@@ -86,34 +88,95 @@ export default function LibraryScreen() {
 
   const renderBook = ({ item }: any) => (
     <TouchableOpacity
-      style={styles.bookCard}
+      style={{
+        backgroundColor: colors.card,
+        borderRadius: 12,
+        padding: 12,
+        flexDirection: "row",
+        gap: 12,
+        borderWidth: 1,
+        borderColor: colors.border,
+      }}
       onPress={() => router.push(`/book-detail?id=${item.id}` as any)}
     >
-      <View style={styles.coverContainer}>
+      <View
+        style={{ width: 60, height: 90, borderRadius: 6, overflow: "hidden" }}
+      >
         {item.cover_url ? (
-          <Image source={{ uri: item.cover_url }} style={styles.cover} />
+          <Image
+            source={{ uri: item.cover_url }}
+            style={{ width: 60, height: 90 }}
+          />
         ) : (
-          <View style={styles.noCover}>
-            <Text style={styles.noCoverText}>No cover</Text>
+          <View
+            style={{
+              width: 60,
+              height: 90,
+              backgroundColor: colors.input,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 10,
+                color: colors.textMuted,
+                textAlign: "center",
+                fontFamily: theme.fonts.regular,
+              }}
+            >
+              No cover
+            </Text>
           </View>
         )}
       </View>
-      <View style={styles.bookInfo}>
-        <Text style={styles.bookTitle} numberOfLines={2}>
+      <View style={{ flex: 1, justifyContent: "center", gap: 4 }}>
+        <Text
+          style={{
+            fontSize: 15,
+            color: colors.text,
+            fontFamily: theme.fonts.semibold,
+          }}
+          numberOfLines={2}
+        >
           {item.title}
         </Text>
-        <Text style={styles.bookAuthor} numberOfLines={1}>
+        <Text
+          style={{
+            fontSize: 13,
+            color: colors.textSecondary,
+            fontFamily: theme.fonts.regular,
+          }}
+          numberOfLines={1}
+        >
           {item.author}
         </Text>
-        {item.year ? <Text style={styles.bookYear}>{item.year}</Text> : null}
+        {item.year ? (
+          <Text
+            style={{
+              fontSize: 12,
+              color: colors.textMuted,
+              fontFamily: theme.fonts.regular,
+            }}
+          >
+            {item.year}
+          </Text>
+        ) : null}
         <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: getStatusColor(item.status) + "20" },
-          ]}
+          style={{
+            alignSelf: "flex-start",
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+            borderRadius: 6,
+            backgroundColor: getStatusColor(item.status) + "20",
+          }}
         >
           <Text
-            style={[styles.statusText, { color: getStatusColor(item.status) }]}
+            style={{
+              fontSize: 11,
+              fontFamily: theme.fonts.semibold,
+              color: getStatusColor(item.status),
+            }}
           >
             {getStatusLabel(item.status)}
           </Text>
@@ -123,19 +186,38 @@ export default function LibraryScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.tabs}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View
+        style={{
+          flexDirection: "row",
+          backgroundColor: colors.card,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          paddingHorizontal: 8,
+        }}
+      >
         {TABS.map((tab) => (
           <TouchableOpacity
             key={tab.value}
-            style={[styles.tab, activeTab === tab.value && styles.activeTab]}
+            style={{
+              flex: 1,
+              paddingVertical: 12,
+              alignItems: "center",
+              borderBottomWidth: activeTab === tab.value ? 2 : 0,
+              borderBottomColor: colors.primary,
+            }}
             onPress={() => setActiveTab(tab.value)}
           >
             <Text
-              style={[
-                styles.tabText,
-                activeTab === tab.value && styles.activeTabText,
-              ]}
+              style={{
+                fontSize: 12,
+                color:
+                  activeTab === tab.value ? colors.primary : colors.textMuted,
+                fontFamily:
+                  activeTab === tab.value
+                    ? theme.fonts.bold
+                    : theme.fonts.semibold,
+              }}
             >
               {tab.label}
             </Text>
@@ -145,14 +227,33 @@ export default function LibraryScreen() {
       {loading ? (
         <ActivityIndicator
           size="large"
-          color={theme.colors.primary}
-          style={styles.loader}
+          color={colors.primary}
+          style={{ marginTop: 40 }}
         />
       ) : books.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>📚</Text>
-          <Text style={styles.emptyText}>No books here yet</Text>
-          <Text style={styles.emptySubtext}>
+        <View
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>📚</Text>
+          <Text
+            style={{
+              fontSize: 16,
+              color: colors.text,
+              marginBottom: 4,
+              fontFamily: theme.fonts.semibold,
+            }}
+          >
+            No books here yet
+          </Text>
+          <Text
+            style={{
+              fontSize: 13,
+              color: colors.textMuted,
+              textAlign: "center",
+              paddingHorizontal: 32,
+              fontFamily: theme.fonts.regular,
+            }}
+          >
             Search for books and add them to your library
           </Text>
         </View>
@@ -161,7 +262,7 @@ export default function LibraryScreen() {
           data={books}
           keyExtractor={(item) => item.id}
           renderItem={renderBook}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={{ padding: 16, gap: 12 }}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -169,92 +270,4 @@ export default function LibraryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  tabs: {
-    flexDirection: "row",
-    backgroundColor: theme.colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    paddingHorizontal: 8,
-  },
-  tab: { flex: 1, paddingVertical: 12, alignItems: "center" },
-  activeTab: { borderBottomWidth: 2, borderBottomColor: theme.colors.primary },
-  tabText: {
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    fontFamily: theme.fonts.semibold,
-  },
-  activeTabText: { color: theme.colors.primary, fontFamily: theme.fonts.bold },
-  loader: { marginTop: 40 },
-  emptyContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
-  emptyIcon: { fontSize: 40, marginBottom: 12 },
-  emptyText: {
-    fontSize: 16,
-    color: theme.colors.text,
-    marginBottom: 4,
-    fontFamily: theme.fonts.semibold,
-  },
-  emptySubtext: {
-    fontSize: 13,
-    color: theme.colors.textMuted,
-    textAlign: "center",
-    paddingHorizontal: 32,
-    fontFamily: theme.fonts.regular,
-  },
-  list: { padding: 16, gap: 12 },
-  bookCard: {
-    backgroundColor: theme.colors.card,
-    borderRadius: 12,
-    padding: 12,
-    flexDirection: "row",
-    gap: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  coverContainer: {
-    width: 60,
-    height: 90,
-    borderRadius: 6,
-    overflow: "hidden",
-  },
-  cover: { width: 60, height: 90 },
-  noCover: {
-    width: 60,
-    height: 90,
-    backgroundColor: "#eee",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 6,
-  },
-  noCoverText: {
-    fontSize: 10,
-    color: "#aaa",
-    textAlign: "center",
-    fontFamily: theme.fonts.regular,
-  },
-  bookInfo: { flex: 1, justifyContent: "center", gap: 4 },
-  bookTitle: {
-    fontSize: 15,
-    color: theme.colors.text,
-    fontFamily: theme.fonts.semibold,
-  },
-  bookAuthor: {
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    fontFamily: theme.fonts.regular,
-  },
-  bookYear: {
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    fontFamily: theme.fonts.regular,
-  },
-  statusBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginTop: 4,
-  },
-  statusText: { fontSize: 11, fontFamily: theme.fonts.semibold },
-});
+const styles = StyleSheet.create({});

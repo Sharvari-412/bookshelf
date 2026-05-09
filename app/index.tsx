@@ -9,8 +9,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { supabase } from "../lib/supabase";
 import { theme } from "../lib/theme";
+import { useTheme } from "../lib/ThemeContext";
 
 export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
@@ -19,6 +21,7 @@ export default function HomeScreen() {
   const [currentlyReading, setCurrentlyReading] = useState<any[]>([]);
   const [recentlyFinished, setRecentlyFinished] = useState<any[]>([]);
   const router = useRouter();
+  const { colors, isDark } = useTheme();
 
   const fetchData = async () => {
     setLoading(true);
@@ -26,7 +29,12 @@ export default function HomeScreen() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      setUser(user);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", user?.id)
+        .single();
+      setUser({ ...user, username: profile?.username });
       const { data, error } = await supabase
         .from("user_books")
         .select("*")
@@ -64,38 +72,165 @@ export default function HomeScreen() {
 
   if (loading)
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colors.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
 
-  return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.hero}>
-        <Text style={styles.greeting}>{getGreeting()}</Text>
-        <Text style={styles.name}>{user?.email?.split("@")[0]}</Text>
-      </View>
+  const STAT_CARDS = [
+    {
+      label: "Total",
+      value: stats.total,
+      bg: isDark ? "#2D2B5E" : "#EEF2FF",
+      color: colors.primary,
+    },
+    {
+      label: "Finished",
+      value: stats.finished,
+      bg: isDark ? "#0D3D2E" : "#ECFDF5",
+      color: colors.success,
+    },
+    {
+      label: "Reading",
+      value: stats.reading,
+      bg: isDark ? "#3D2E0A" : "#FFFBEB",
+      color: colors.warning,
+    },
+  ];
 
-      <View style={styles.statsRow}>
-        {[
-          { label: "Total books", value: stats.total },
-          { label: "Finished", value: stats.finished },
-          { label: "Reading", value: stats.reading },
-        ].map((stat) => (
-          <View key={stat.label} style={styles.statCard}>
-            <Text style={styles.statNumber}>{stat.value}</Text>
-            <Text style={styles.statLabel}>{stat.label}</Text>
-          </View>
+  return (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      showsVerticalScrollIndicator={false}
+    >
+      <Animated.View
+        entering={FadeInUp.duration(500)}
+        style={{
+          backgroundColor: colors.hero,
+          paddingHorizontal: 24,
+          paddingTop: 40,
+          paddingBottom: 32,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 16,
+            color: "rgba(255,255,255,0.8)",
+            marginBottom: 4,
+            fontFamily: theme.fonts.regular,
+          }}
+        >
+          {getGreeting()}
+        </Text>
+        <Text
+          style={{
+            fontSize: 28,
+            color: "#fff",
+            textTransform: "capitalize",
+            fontFamily: theme.fonts.bold,
+          }}
+        >
+          {user?.username || user?.email?.split("@")[0]}
+        </Text>
+      </Animated.View>
+
+      <View
+        style={{
+          flexDirection: "row",
+          paddingHorizontal: 16,
+          gap: 10,
+          marginTop: -20,
+          marginBottom: 24,
+        }}
+      >
+        {STAT_CARDS.map((stat, i) => (
+          <Animated.View
+            key={stat.label}
+            entering={FadeInDown.delay(i * 100).duration(500)}
+            style={{
+              flex: 1,
+              borderRadius: 16,
+              padding: 16,
+              alignItems: "center",
+              backgroundColor: stat.bg,
+              elevation: 3,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 24,
+                color: stat.color,
+                marginBottom: 4,
+                fontFamily: theme.fonts.bold,
+              }}
+            >
+              {stat.value}
+            </Text>
+            <Text
+              style={{
+                fontSize: 11,
+                color: stat.color,
+                textAlign: "center",
+                fontFamily: theme.fonts.semibold,
+              }}
+            >
+              {stat.label}
+            </Text>
+          </Animated.View>
         ))}
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Currently reading</Text>
+      <Animated.View
+        entering={FadeInDown.delay(300).duration(500)}
+        style={{ paddingHorizontal: 16, marginBottom: 24 }}
+      >
+        <Text
+          style={{
+            fontSize: 18,
+            color: colors.text,
+            marginBottom: 12,
+            fontFamily: theme.fonts.bold,
+          }}
+        >
+          Currently reading
+        </Text>
         {currentlyReading.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyIcon}>📚</Text>
-            <Text style={styles.emptyText}>No books in progress</Text>
-            <Text style={styles.emptySubtext}>
+          <View
+            style={{
+              backgroundColor: colors.card,
+              borderRadius: 12,
+              padding: 32,
+              alignItems: "center",
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+          >
+            <Text style={{ fontSize: 32, marginBottom: 12 }}>📚</Text>
+            <Text
+              style={{
+                fontSize: 15,
+                color: colors.text,
+                marginBottom: 4,
+                fontFamily: theme.fonts.semibold,
+              }}
+            >
+              No books in progress
+            </Text>
+            <Text
+              style={{
+                fontSize: 13,
+                color: colors.textMuted,
+                textAlign: "center",
+                fontFamily: theme.fonts.regular,
+              }}
+            >
               Search for a book to get started
             </Text>
           </View>
@@ -103,214 +238,156 @@ export default function HomeScreen() {
           currentlyReading.map((book) => (
             <TouchableOpacity
               key={book.id}
-              style={styles.bookRow}
+              style={{
+                backgroundColor: colors.card,
+                borderRadius: 12,
+                padding: 12,
+                flexDirection: "row",
+                gap: 12,
+                borderWidth: 1,
+                borderColor: colors.border,
+                marginBottom: 8,
+                alignItems: "center",
+              }}
               onPress={() => router.push(`/book-detail?id=${book.id}` as any)}
             >
               {book.cover_url ? (
-                <Image source={{ uri: book.cover_url }} style={styles.cover} />
+                <Image
+                  source={{ uri: book.cover_url }}
+                  style={{ width: 50, height: 70, borderRadius: 6 }}
+                />
               ) : (
-                <View style={styles.noCover}>
-                  <Text style={styles.noCoverEmoji}>📖</Text>
+                <View
+                  style={{
+                    width: 50,
+                    height: 70,
+                    borderRadius: 6,
+                    backgroundColor: colors.input,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ fontSize: 24 }}>📖</Text>
                 </View>
               )}
-              <View style={styles.bookInfo}>
-                <Text style={styles.bookTitle} numberOfLines={2}>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: 15,
+                    color: colors.text,
+                    marginBottom: 4,
+                    fontFamily: theme.fonts.semibold,
+                  }}
+                  numberOfLines={2}
+                >
                   {book.title}
                 </Text>
-                <Text style={styles.bookAuthor} numberOfLines={1}>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: colors.textMuted,
+                    marginBottom: 6,
+                    fontFamily: theme.fonts.regular,
+                  }}
+                  numberOfLines={1}
+                >
                   {book.author}
                 </Text>
-                <View style={styles.readingBadge}>
-                  <Text style={styles.readingBadgeText}>Reading</Text>
+                <View
+                  style={{
+                    alignSelf: "flex-start",
+                    backgroundColor: colors.warning + "20",
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 6,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: colors.warning,
+                      fontFamily: theme.fonts.semibold,
+                    }}
+                  >
+                    Reading
+                  </Text>
                 </View>
               </View>
             </TouchableOpacity>
           ))
         )}
-      </View>
+      </Animated.View>
 
       {recentlyFinished.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recently finished</Text>
+        <Animated.View
+          entering={FadeInDown.delay(400).duration(500)}
+          style={{ paddingHorizontal: 16, marginBottom: 24 }}
+        >
+          <Text
+            style={{
+              fontSize: 18,
+              color: colors.text,
+              marginBottom: 12,
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            Recently finished
+          </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {recentlyFinished.map((book) => (
               <TouchableOpacity
                 key={book.id}
-                style={styles.horizontalBook}
+                style={{ width: 100, marginRight: 12 }}
                 onPress={() => router.push(`/book-detail?id=${book.id}` as any)}
               >
                 {book.cover_url ? (
                   <Image
                     source={{ uri: book.cover_url }}
-                    style={styles.horizontalCover}
+                    style={{
+                      width: 100,
+                      height: 140,
+                      borderRadius: 8,
+                      marginBottom: 8,
+                    }}
                   />
                 ) : (
                   <View
-                    style={[styles.horizontalCover, styles.noCoverHorizontal]}
+                    style={{
+                      width: 100,
+                      height: 140,
+                      borderRadius: 8,
+                      marginBottom: 8,
+                      backgroundColor: colors.input,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
                   >
-                    <Text style={styles.noCoverEmoji}>📖</Text>
+                    <Text style={{ fontSize: 32 }}>📖</Text>
                   </View>
                 )}
-                <Text style={styles.horizontalTitle} numberOfLines={2}>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: colors.text,
+                    marginBottom: 4,
+                    fontFamily: theme.fonts.semibold,
+                  }}
+                  numberOfLines={2}
+                >
                   {book.title}
                 </Text>
                 {book.rating ? (
-                  <Text style={styles.horizontalRating}>
+                  <Text style={{ fontSize: 11 }}>
                     {"⭐".repeat(book.rating)}
                   </Text>
                 ) : null}
               </TouchableOpacity>
             ))}
           </ScrollView>
-        </View>
+        </Animated.View>
       )}
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  centered: { flex: 1, alignItems: "center", justifyContent: "center" },
-  hero: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 32,
-  },
-  greeting: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
-    marginBottom: 4,
-    fontFamily: theme.fonts.regular,
-  },
-  name: {
-    fontSize: 28,
-    color: "#fff",
-    textTransform: "capitalize",
-    fontFamily: theme.fonts.bold,
-  },
-  statsRow: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    gap: 10,
-    marginTop: -20,
-    marginBottom: 24,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: theme.colors.card,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-  },
-  statNumber: {
-    fontSize: 24,
-    color: theme.colors.primary,
-    marginBottom: 4,
-    fontFamily: theme.fonts.bold,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    textAlign: "center",
-    fontFamily: theme.fonts.regular,
-  },
-  section: { paddingHorizontal: 16, marginBottom: 24 },
-  sectionTitle: {
-    fontSize: 18,
-    color: theme.colors.text,
-    marginBottom: 12,
-    fontFamily: theme.fonts.bold,
-  },
-  emptyCard: {
-    backgroundColor: theme.colors.card,
-    borderRadius: 12,
-    padding: 32,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  emptyIcon: { fontSize: 32, marginBottom: 12 },
-  emptyText: {
-    fontSize: 15,
-    color: theme.colors.text,
-    marginBottom: 4,
-    fontFamily: theme.fonts.semibold,
-  },
-  emptySubtext: {
-    fontSize: 13,
-    color: theme.colors.textMuted,
-    textAlign: "center",
-    fontFamily: theme.fonts.regular,
-  },
-  bookRow: {
-    backgroundColor: theme.colors.card,
-    borderRadius: 12,
-    padding: 12,
-    flexDirection: "row",
-    gap: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    marginBottom: 8,
-    alignItems: "center",
-  },
-  cover: { width: 50, height: 70, borderRadius: 6 },
-  noCover: {
-    width: 50,
-    height: 70,
-    borderRadius: 6,
-    backgroundColor: "#f3f3f3",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  noCoverEmoji: { fontSize: 24 },
-  bookInfo: { flex: 1 },
-  bookTitle: {
-    fontSize: 15,
-    color: theme.colors.text,
-    marginBottom: 4,
-    fontFamily: theme.fonts.semibold,
-  },
-  bookAuthor: {
-    fontSize: 13,
-    color: theme.colors.textMuted,
-    marginBottom: 6,
-    fontFamily: theme.fonts.regular,
-  },
-  readingBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: "#F59E0B20",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  readingBadgeText: {
-    fontSize: 11,
-    color: theme.colors.warning,
-    fontFamily: theme.fonts.semibold,
-  },
-  horizontalBook: { width: 100, marginRight: 12 },
-  horizontalCover: {
-    width: 100,
-    height: 140,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  noCoverHorizontal: {
-    backgroundColor: "#f3f3f3",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  horizontalTitle: {
-    fontSize: 12,
-    color: theme.colors.text,
-    marginBottom: 4,
-    fontFamily: theme.fonts.semibold,
-  },
-  horizontalRating: { fontSize: 11 },
-});
+const styles = StyleSheet.create({});

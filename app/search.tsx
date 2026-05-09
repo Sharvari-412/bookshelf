@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { supabase } from "../lib/supabase";
 import { theme } from "../lib/theme";
+import { useTheme } from "../lib/ThemeContext";
 
 export default function SearchScreen() {
   const [query, setQuery] = useState("");
@@ -19,6 +20,7 @@ export default function SearchScreen() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
+  const { colors } = useTheme();
 
   const searchBooks = async () => {
     if (!query.trim()) return;
@@ -47,15 +49,17 @@ export default function SearchScreen() {
       const cover = item.cover_i
         ? `https://covers.openlibrary.org/b/id/${item.cover_i}-M.jpg`
         : null;
-      const { error } = await supabase.from("user_books").insert({
-        user_id: user.id,
-        book_id: item.key,
-        title: item.title,
-        author: item.author_name?.join(", ") || "Unknown author",
-        cover_url: cover,
-        year: item.first_publish_year?.toString() || "",
-        status,
-      });
+      const { error } = await supabase
+        .from("user_books")
+        .insert({
+          user_id: user.id,
+          book_id: item.key,
+          title: item.title,
+          author: item.author_name?.join(", ") || "Unknown author",
+          cover_url: cover,
+          year: item.first_publish_year?.toString() || "",
+          status,
+        });
       if (error) throw error;
       Alert.alert("Added!", `"${item.title}" added to your library.`);
     } catch (error: any) {
@@ -71,49 +75,144 @@ export default function SearchScreen() {
       : null;
     const isAdding = adding === item.key;
     return (
-      <View style={styles.bookCard}>
-        <View style={styles.coverContainer}>
+      <View
+        style={{
+          backgroundColor: colors.card,
+          borderRadius: 12,
+          padding: 12,
+          flexDirection: "row",
+          gap: 12,
+          borderWidth: 1,
+          borderColor: colors.border,
+        }}
+      >
+        <View
+          style={{ width: 60, height: 90, borderRadius: 6, overflow: "hidden" }}
+        >
           {cover ? (
-            <Image source={{ uri: cover }} style={styles.cover} />
+            <Image source={{ uri: cover }} style={{ width: 60, height: 90 }} />
           ) : (
-            <View style={styles.noCover}>
-              <Text style={styles.noCoverText}>No cover</Text>
+            <View
+              style={{
+                width: 60,
+                height: 90,
+                backgroundColor: colors.input,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 10,
+                  color: colors.textMuted,
+                  textAlign: "center",
+                  fontFamily: theme.fonts.regular,
+                }}
+              >
+                No cover
+              </Text>
             </View>
           )}
         </View>
-        <View style={styles.bookInfo}>
-          <Text style={styles.bookTitle} numberOfLines={2}>
+        <View style={{ flex: 1, justifyContent: "center", gap: 4 }}>
+          <Text
+            style={{
+              fontSize: 15,
+              color: colors.text,
+              fontFamily: theme.fonts.semibold,
+            }}
+            numberOfLines={2}
+          >
             {item.title}
           </Text>
-          <Text style={styles.bookAuthor} numberOfLines={1}>
+          <Text
+            style={{
+              fontSize: 13,
+              color: colors.textSecondary,
+              fontFamily: theme.fonts.regular,
+            }}
+            numberOfLines={1}
+          >
             {item.author_name?.join(", ") || "Unknown author"}
           </Text>
           {item.first_publish_year ? (
-            <Text style={styles.bookYear}>
+            <Text
+              style={{
+                fontSize: 12,
+                color: colors.textMuted,
+                fontFamily: theme.fonts.regular,
+              }}
+            >
               {String(item.first_publish_year)}
             </Text>
           ) : null}
-          <View style={styles.actions}>
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 6,
+              marginTop: 8,
+              flexWrap: "wrap",
+            }}
+          >
             <TouchableOpacity
-              style={[styles.actionBtn, styles.readingBtn]}
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 6,
+                backgroundColor: colors.warning,
+              }}
               onPress={() => addToLibrary(item, "reading")}
               disabled={isAdding}
             >
-              <Text style={styles.actionBtnText}>Reading</Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: "#fff",
+                  fontFamily: theme.fonts.semibold,
+                }}
+              >
+                Reading
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.actionBtn, styles.wantBtn]}
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 6,
+                backgroundColor: colors.primary,
+              }}
               onPress={() => addToLibrary(item, "want_to_read")}
               disabled={isAdding}
             >
-              <Text style={styles.actionBtnText}>Want to Read</Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: "#fff",
+                  fontFamily: theme.fonts.semibold,
+                }}
+              >
+                Want to Read
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.actionBtn, styles.readBtn]}
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 6,
+                backgroundColor: colors.success,
+              }}
               onPress={() => addToLibrary(item, "read")}
               disabled={isAdding}
             >
-              <Text style={styles.actionBtnText}>Finished</Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: "#fff",
+                  fontFamily: theme.fonts.semibold,
+                }}
+              >
+                Finished
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -122,39 +221,107 @@ export default function SearchScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.searchBar}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View
+        style={{
+          flexDirection: "row",
+          padding: 16,
+          gap: 10,
+          backgroundColor: colors.card,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        }}
+      >
         <TextInput
-          style={styles.input}
+          style={{
+            flex: 1,
+            backgroundColor: colors.input,
+            borderRadius: 10,
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+            fontSize: 15,
+            color: colors.text,
+            fontFamily: theme.fonts.regular,
+          }}
           placeholder="Search books, authors..."
-          placeholderTextColor="#aaa"
+          placeholderTextColor={colors.textMuted}
           value={query}
           onChangeText={setQuery}
           onSubmitEditing={searchBooks}
           returnKeyType="search"
         />
-        <TouchableOpacity style={styles.searchButton} onPress={searchBooks}>
-          <Text style={styles.searchButtonText}>Search</Text>
+        <TouchableOpacity
+          style={{
+            backgroundColor: colors.primary,
+            borderRadius: 10,
+            paddingHorizontal: 18,
+            justifyContent: "center",
+          }}
+          onPress={searchBooks}
+        >
+          <Text
+            style={{
+              color: "#fff",
+              fontFamily: theme.fonts.semibold,
+              fontSize: 14,
+            }}
+          >
+            Search
+          </Text>
         </TouchableOpacity>
       </View>
       {loading && (
         <ActivityIndicator
           size="large"
-          color={theme.colors.primary}
-          style={styles.loader}
+          color={colors.primary}
+          style={{ marginTop: 40 }}
         />
       )}
       {!loading && searched && books.length === 0 && (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No books found</Text>
-          <Text style={styles.emptySubtext}>Try a different search term</Text>
+        <View
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
+          <Text
+            style={{
+              fontSize: 16,
+              color: colors.text,
+              fontFamily: theme.fonts.semibold,
+            }}
+          >
+            No books found
+          </Text>
+          <Text
+            style={{
+              fontSize: 13,
+              color: colors.textMuted,
+              fontFamily: theme.fonts.regular,
+            }}
+          >
+            Try a different search term
+          </Text>
         </View>
       )}
       {!loading && !searched && (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>🔍</Text>
-          <Text style={styles.emptyText}>Find your next read</Text>
-          <Text style={styles.emptySubtext}>
+        <View
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>🔍</Text>
+          <Text
+            style={{
+              fontSize: 16,
+              color: colors.text,
+              fontFamily: theme.fonts.semibold,
+            }}
+          >
+            Find your next read
+          </Text>
+          <Text
+            style={{
+              fontSize: 13,
+              color: colors.textMuted,
+              fontFamily: theme.fonts.regular,
+            }}
+          >
             Search by title, author or ISBN
           </Text>
         </View>
@@ -163,113 +330,11 @@ export default function SearchScreen() {
         data={books}
         keyExtractor={(item: any) => item.key}
         renderItem={renderBook}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={{ padding: 16, gap: 12 }}
         showsVerticalScrollIndicator={false}
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  searchBar: {
-    flexDirection: "row",
-    padding: 16,
-    gap: 10,
-    backgroundColor: theme.colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: "#f3f3f3",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: theme.colors.text,
-    fontFamily: theme.fonts.regular,
-  },
-  searchButton: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: 10,
-    paddingHorizontal: 18,
-    justifyContent: "center",
-  },
-  searchButtonText: {
-    color: "#fff",
-    fontFamily: theme.fonts.semibold,
-    fontSize: 14,
-  },
-  loader: { marginTop: 40 },
-  emptyContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
-  emptyIcon: { fontSize: 40, marginBottom: 12 },
-  emptyText: {
-    fontSize: 16,
-    color: theme.colors.text,
-    marginBottom: 4,
-    fontFamily: theme.fonts.semibold,
-  },
-  emptySubtext: {
-    fontSize: 13,
-    color: theme.colors.textMuted,
-    fontFamily: theme.fonts.regular,
-  },
-  list: { padding: 16, gap: 12 },
-  bookCard: {
-    backgroundColor: theme.colors.card,
-    borderRadius: 12,
-    padding: 12,
-    flexDirection: "row",
-    gap: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  coverContainer: {
-    width: 60,
-    height: 90,
-    borderRadius: 6,
-    overflow: "hidden",
-  },
-  cover: { width: 60, height: 90 },
-  noCover: {
-    width: 60,
-    height: 90,
-    backgroundColor: "#eee",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 6,
-  },
-  noCoverText: {
-    fontSize: 10,
-    color: "#aaa",
-    textAlign: "center",
-    fontFamily: theme.fonts.regular,
-  },
-  bookInfo: { flex: 1, justifyContent: "center", gap: 4 },
-  bookTitle: {
-    fontSize: 15,
-    color: theme.colors.text,
-    fontFamily: theme.fonts.semibold,
-  },
-  bookAuthor: {
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    fontFamily: theme.fonts.regular,
-  },
-  bookYear: {
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    fontFamily: theme.fonts.regular,
-  },
-  actions: { flexDirection: "row", gap: 6, marginTop: 8, flexWrap: "wrap" },
-  actionBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6 },
-  actionBtnText: {
-    fontSize: 11,
-    color: "#fff",
-    fontFamily: theme.fonts.semibold,
-  },
-  readingBtn: { backgroundColor: theme.colors.warning },
-  wantBtn: { backgroundColor: theme.colors.primary },
-  readBtn: { backgroundColor: theme.colors.success },
-});
+const styles = StyleSheet.create({});
